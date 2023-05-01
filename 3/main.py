@@ -10,9 +10,18 @@ dataset = DatasetLoader(mode)
 
 if mode=="debug":
 	# debug gradients
-	optimizer = Optimizer(weight_decay_parameter=0, lr_cycle_magnitude=5, n_epochs=20, batch_size=10, dataset=dataset, hidden_layers_structure=[15,20])
-	# optimizer.compare_two_gradients_methods()
-	optimizer.resolve_with_SDG(plot=True, verbose=True, mode=mode)
+	print("\n --- \n")
+	optimizer = Optimizer(weight_decay_parameter=0, lr_cycle_magnitude=5, n_epochs=20, batch_size=10, dataset=dataset, hidden_layers_structure=[10])
+	optimizer.compare_two_gradients_methods()
+	
+	print("\n --- \n")
+	optimizer = Optimizer(weight_decay_parameter=0, lr_cycle_magnitude=5, n_epochs=20, batch_size=10, dataset=dataset, hidden_layers_structure=[10,12])
+	optimizer.compare_two_gradients_methods()
+
+	print("\n --- \n")
+	optimizer = Optimizer(weight_decay_parameter=0, lr_cycle_magnitude=5, n_epochs=20, batch_size=10, dataset=dataset, hidden_layers_structure=[10,12,15])
+	optimizer.compare_two_gradients_methods()
+	# optimizer.resolve_with_SDG(plot=True, verbose=True, mode=mode)
 
 	#debug cyclical learning rate 
 	# optimizer = Optimizer(weight_decay_parameter = 1e-2, lr_cycle_magnitude=5, n_epochs = 10, batch_size=100, dataset=dataset)

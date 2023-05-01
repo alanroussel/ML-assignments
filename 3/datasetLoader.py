@@ -1,5 +1,5 @@
 from load import load 
-
+import numpy as np 
 class DatasetLoader:
 	def __init__(self, mode):
 		self.mode = mode

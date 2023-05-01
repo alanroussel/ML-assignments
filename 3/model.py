@@ -33,8 +33,7 @@ class Model:
 		self.weight_decay_parameter = weight_decay_parameter
 		self.etaCycle = EtaCycle(1e-5, 1e-1, ns)
 
-		print(f'model \n size of layers : {layers_sizes} \n weight decay parameter : {weight_decay_parameter}')
-		print(f' batch size {batch_size}')
+		print(f'model \n size of layers : {layers_sizes} \n weight decay parameter : {weight_decay_parameter} \n')
 	
 		
 	def evaluate(self, X):
@@ -72,8 +71,6 @@ class Model:
 		""" Converted from matlab code """
 		grad_W1 = np.zeros(self.layers[0]["weight"].shape)
 		grad_b1 = np.zeros(self.layers[0]["bias"].shape)
-		grad_W2 = np.zeros(self.layers[1]["weight"].shape)
-		grad_b2 = np.zeros(self.layers[1]["bias"].shape)
 
 		X = X.T
 
@@ -83,41 +80,29 @@ class Model:
 			for j in range(grad_W1.shape[1]):
 				W_try = np.array(self.layers[0]["weight"])
 				W_try[i,j] += h
-
-				H = ReLU(np.add(np.matmul(W_try, X), self.layers[0]["bias"])) 
-				P_try = softmax(np.add(np.matmul(self.layers[1]["weight"], H), self.layers[1]["bias"])) 
-				c2, _, _ = self.computeCost(Y, P_try, andAccuracy=False)
+				Xtry = np.copy(X)
+				Xtry = ReLU(np.add(np.matmul(W_try, Xtry), self.layers[0]["bias"])) 
+				for layer in self.layers[1:-1]:
+					Xtry = ReLU(np.add(np.matmul(layer["weight"], Xtry), layer["bias"])) 
+				P = softmax(np.add(np.matmul(self.layers[-1]["weight"], Xtry), self.layers[-1]["bias"]))
+				c2, _, _ = self.computeCost(Y, P, andAccuracy=False)
 				grad_W1[i,j] = (c2-c) / h
 		
-		for i in range(grad_W2.shape[0]):
-			for j in range(grad_W2.shape[1]):
-				W_try = np.array(self.layers[1]["weight"])
-				W_try[i,j] += h
-
-				H = ReLU(np.add(np.matmul(self.layers[0]["weight"], X), self.layers[0]["bias"])) 
-				P = softmax(np.add(np.matmul(W_try, H), self.layers[1]["bias"])) 
-				c2, _, _ = self.computeCost(Y, P, andAccuracy=False)
-				grad_W2[i,j] = (c2-c) / h
 		
 		for i in range(grad_b1.shape[0]):
 			b_try = np.array(self.layers[0]["bias"])
 			b_try[i] += h
-			H = ReLU(np.add(np.matmul(self.layers[0]["weight"], X), b_try)) 
-			P = softmax(np.add(np.matmul(self.layers[1]["weight"], H), self.layers[1]["bias"])) 
+			Xtry = np.copy(X)
+			Xtry = ReLU(np.add(np.matmul(self.layers[0]["weight"],Xtry), b_try)) 
+			for layer in self.layers[1:-1]:
+				Xtry = ReLU(np.add(np.matmul(layer["weight"], Xtry), layer["bias"])) 
+			P = softmax(np.add(np.matmul(self.layers[-1]["weight"], Xtry), self.layers[-1]["bias"]))
 			c2, _, _ = self.computeCost(Y, P, andAccuracy=False)
 			grad_b1[i] = (c2-c) / h
 		
-		for i in range(grad_b2.shape[0]):
-			b_try = np.array(self.layers[1]["bias"])
-			b_try[i] += h
-			H = ReLU(np.add(np.matmul(self.layers[0]["weight"], X), self.layers[0]["bias"])) 
-			P = softmax(np.add(np.matmul(self.layers[1]["weight"], H), b_try)) 
-			
-			c2, _, _ = self.computeCost(Y, P, andAccuracy=False)
-			grad_b2[i] = (c2-c) / h
 		
 
-		return [grad_W1, grad_b1, grad_W2, grad_b2]
+		return [grad_W1, grad_b1]
 
 	def computeGradsAnalytical(self,X,Y,Hs,P):
 		grad_W1 = np.zeros(self.layers[0]["weight"].shape)

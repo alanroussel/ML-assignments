@@ -6,8 +6,8 @@ class Optimizer:
 		self.model = Model(hidden_layers_structure, weight_decay_parameter, batch_size, lr_cycle_magnitude, dataset.training[0].shape[0])
 		self.n_epochs = n_epochs
 		self.batch_size = batch_size
-		self.str = f'lambda = {weight_decay_parameter}, n_epochs = {n_epochs}, batch_size = {batch_size}, hidden_layers_structure={hidden_layers_structure}'
 		self.dataset = dataset
+		print(f'optimizer \n n_epochs : {n_epochs} \n batch_size : {batch_size} \n')
 	
 	def plot(self, plot_metrics, n_epochs):
 		plt.subplot(133)
@@ -31,7 +31,7 @@ class Optimizer:
 		plt.legend()
 
 
-		plt.suptitle(self.str)
+		plt.suptitle('suptitle to write')
 		plt.show()
 		
 		# fig, ax = plt.subplots(1,10, figsize=(16, 8))
@@ -44,15 +44,17 @@ class Optimizer:
 		# plt.show()
 
 	def compare_two_gradients_methods(self):
-		print(self.str)
 		X, Y = np.copy(self.dataset.training[0]), np.copy(self.dataset.training[1])
 		n_of_data = X.shape[0]
 		perm = np.random.permutation(n_of_data)
 		X = X[perm]
 		Y = Y[:,perm]
 		for batch_index in range(int(n_of_data/self.batch_size)):
+				if(batch_index==3):
+					break
 				batch_id_start = batch_index*self.batch_size
 				batch_id_end = (batch_index+1)*self.batch_size
+				pass
 
 				X_batch = X[batch_id_start:batch_id_end, :]
 				Y_batch = Y[:, batch_id_start:batch_id_end]
@@ -62,9 +64,9 @@ class Optimizer:
 				print(f'computing error for a batch ... ')
 				analytical  = self.model.computeGradsAnalytical(X_batch, Y_batch,H, Y_pred)
 				numeric = self.model.computeGradsNum(X_batch, Y_batch,Y_pred, h=1e-5)
-				layers_name_to_print = ["W1", "b1", "W2", "b2"]
+				layers_name_to_print = ["W1", "b1"]
 				for i, name in enumerate(layers_name_to_print):
-					error = np.max(np.abs(analytical[i]-numeric[i])) / np.maximum(1e-6,np.abs(np.max(analytical[i])) + np.abs(np.max(numeric[i])))
+					error = np.max(np.abs(analytical[0][i]-numeric[i])) / np.maximum(1e-6,np.abs(np.max(analytical[0][i])) + np.abs(np.max(numeric[i])))
 					print(f'\terror is {error} for {name}')
 
 	def resolve_with_SDG(self, verbose=True, plot=True, mode="training"):
