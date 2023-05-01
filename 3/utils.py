@@ -1,14 +1,6 @@
 
 import numpy as np
 
-def softmax(x):
-    """ Standard definition of the softmax function """
-    return np.exp(x) / np.sum(np.exp(x), axis=0)
-
-def ReLU(x):
-    """ Standard definition of relu """
-    return np.maximum(x, 0) #to be checked
-
 def show_weights(W):
 	""" Display the W W """
 	import matplotlib.pyplot as plt
