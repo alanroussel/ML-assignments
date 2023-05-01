@@ -3,8 +3,7 @@ from load import load
 class DatasetLoader:
 	def __init__(self, mode):
 		self.mode = mode
-		print('dataset mode = {}'.format(mode))
-		print("loading dataset ...")
+		print(f'dataset \n{mode} mode')
 		if(self.mode=="debug"):
 			self.training = load('dataset/data_batch_1')
 			self.validation = load('dataset/data_batch_2')
@@ -27,6 +26,6 @@ class DatasetLoader:
 			self.training = training
 			self.validation = validation
 		self.test = load('dataset/test_batch')
-		print(f'training dataset of size {self.training[0].shape[0]} \nvalidation dataset of size {self.validation[0].shape[0]}')
-		print(f'test dataset of size {self.test[0].shape[0]}')
+		print(f'training/validation/test : {self.training[0].shape[0]}/{self.validation[0].shape[0]}/{self.test[0].shape[0]} \n')
+		
 	

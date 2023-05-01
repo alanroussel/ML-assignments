@@ -10,7 +10,7 @@ dataset = DatasetLoader(mode)
 
 if mode=="debug":
 	# debug gradients
-	optimizer = Optimizer(weight_decay_parameter=0, lr_cycle_magnitude=5, n_epochs=20, batch_size=10, dataset=dataset, first_hidden_layer_size=15)
+	optimizer = Optimizer(weight_decay_parameter=0, lr_cycle_magnitude=5, n_epochs=20, batch_size=10, dataset=dataset, hidden_layers_structure=[15,20])
 	# optimizer.compare_two_gradients_methods()
 	optimizer.resolve_with_SDG(plot=True, verbose=True, mode=mode)
 

@@ -2,11 +2,11 @@ import numpy as np
 import matplotlib.pyplot as plt
 from model import Model
 class Optimizer:
-	def __init__(self,weight_decay_parameter, lr_cycle_magnitude, n_epochs, batch_size, dataset, first_hidden_layer_size=50):
-		self.model = Model(first_hidden_layer_size, weight_decay_parameter, batch_size, lr_cycle_magnitude, dataset.training[0].shape[0])
+	def __init__(self,weight_decay_parameter, lr_cycle_magnitude, n_epochs, batch_size, dataset, hidden_layers_structure):
+		self.model = Model(hidden_layers_structure, weight_decay_parameter, batch_size, lr_cycle_magnitude, dataset.training[0].shape[0])
 		self.n_epochs = n_epochs
 		self.batch_size = batch_size
-		self.str = f'lambda = {weight_decay_parameter}, n_epochs = {n_epochs}, batch_size = {batch_size}, first_hidden_layer_size={first_hidden_layer_size}'
+		self.str = f'lambda = {weight_decay_parameter}, n_epochs = {n_epochs}, batch_size = {batch_size}, hidden_layers_structure={hidden_layers_structure}'
 		self.dataset = dataset
 	
 	def plot(self, plot_metrics, n_epochs):
@@ -83,9 +83,9 @@ class Optimizer:
 				X_batch = X[batch_id_start:batch_id_end, :]
 				Y_batch = Y[:, batch_id_start:batch_id_end]
 
-				H, Y_pred = self.model.evaluate(X_batch)
+				Hs, Y_pred = self.model.evaluate(X_batch)
 
-				self.model.backpropagate(X_batch, Y_batch,H, Y_pred)
+				self.model.backpropagate(X_batch, Y_batch,Hs, Y_pred)
 
 			# at each epoch
 			if(not (mode=="tuning")):
