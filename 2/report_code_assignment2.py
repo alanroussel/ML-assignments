@@ -1,11 +1,52 @@
 import matplotlib.pyplot as plt
 import numpy as np
-np.seterr(all='raise')
 
-from load import load 
-from utils import softmax, ReLU
 
-#load dataset 
+#################################################################
+## there is only 1 parameter to change, see at the very bottom of the file the parameters called `mode`
+##################################################################
+## UTILS FUNCTIONS ###
+##################################################################
+
+def normalize_images(X):
+	btw_0_and_1 = np.zeros(X.shape)
+	for im_dx, im in enumerate(X):
+		btw_0_and_1[im_dx] = im / 255
+	
+	mean = np.mean(btw_0_and_1, 0)
+	standart_deviation = np.std(btw_0_and_1, 0)
+	return np.divide(np.subtract(btw_0_and_1, mean), standart_deviation)
+
+def one_hot(y, K):
+	classes = np.zeros((len(y), K))
+	classes[np.arange(len(y)), y] = 1
+	return classes.T
+
+def load(file, K=10):
+    '''
+    file is path
+    K is number of class, here 10
+    '''
+    import pickle
+    with open(file, 'rb') as fo:
+        dict = pickle.load(fo, encoding='bytes')
+    X = normalize_images(dict[b'data'])
+    y = np.array(dict[b'labels'])
+    Y = one_hot(y, K)
+    return [X, Y] 
+
+def softmax(x):
+    """ Standard definition of the softmax function """
+    return np.exp(x) / np.sum(np.exp(x), axis=0)
+
+def ReLU(x):
+    """ Standard definition of relu """
+    return np.maximum(x, 0) #to be checked
+
+##################################################################
+## DATASET ###
+##################################################################
+
 class Dataset:
 	def __init__(self, mode):
 		self.mode = mode
@@ -35,7 +76,11 @@ class Dataset:
 		self.test = load('dataset/test_batch')
 		print(f'training dataset of size {self.training[0].shape[0]} \nvalidation dataset of size {self.validation[0].shape[0]}')
 		print(f'test dataset of size {self.test[0].shape[0]}')
-				
+
+
+##################################################################
+## MODEL ###
+##################################################################
 class Model:
 	def __init__(self,m, lamda, batch_size, k, size_of_dataset):
 		K = 10 #number of classes for the classification
@@ -180,6 +225,11 @@ class Model:
 		self.layers[1]["weight"] -= eta*grad_W2
 		self.layers[1]["bias"] -= eta*grad_b2
 
+
+##################################################################
+## OPTIMIZE ###
+##################################################################
+
 class Optimizer:
 	def __init__(self,lamda, k, n_epochs, batch_size, dataset, m=50):
 		self.model = Model(m, lamda, batch_size, k, dataset.training[0].shape[0])
@@ -295,11 +345,14 @@ class Optimizer:
 			print(f'\n\t validation loss/cost/accuracy = {v_loss:.5g} / {v_cost:.5g} / {v_accuracy:.3g}')
 			return v_loss, v_cost, v_accuracy
 
-		
 
+##################################################################
+## CHOICE OF MODE - DEBUG, TUNING OR TRAINING ###
+##################################################################
 
-# mode can be debug, tuning or training  
-mode = "debug"
+# debug is to debug gradients (error computation) or to debug cyclical learning rate
+
+mode = "training"
 dataset = Dataset(mode)
 
 if mode=="debug":
@@ -354,7 +407,6 @@ if mode == "training":
 	# best parameters are lambda = e-3
 	optimizer = Optimizer(lamda=1e-3, k=8, n_epochs=32, batch_size=100, dataset=dataset)
 	loss, c, a = optimizer.resolve_with_SDG(plot=True, verbose=True, mode=mode)
-	#overfiiting parameters : 0:100 of training
 
 
 

@@ -134,10 +134,10 @@ class Resolve:
 				Y_pred = self.model.evaluate(X_batch)
 
 				self.model.backpropagate(X_batch, Y_batch, Y_pred)
-				[a_grad_W, a_grad_b] = self.model.computeGradsAnalytical(X_batch, Y_batch, Y_pred)
-				[n_grad_W, n_grad_b] = self.model.computeGradsNumCorrection(X_batch, Y_batch, Y_pred)
-				error = np.max(np.abs(a_grad_W-n_grad_W)) / np.maximum(1e-6,np.abs(np.max(a_grad_W)) + np.abs(np.max(n_grad_W)))
-				print(error)
+				# [a_grad_W, a_grad_b] = self.model.computeGradsAnalytical(X_batch, Y_batch, Y_pred)
+				# [n_grad_W, n_grad_b] = self.model.computeGradsNumCorrection(X_batch, Y_batch, Y_pred)
+				# error = np.max(np.abs(a_grad_W-n_grad_W)) / np.maximum(1e-6,np.abs(np.max(a_grad_W)) + np.abs(np.max(n_grad_W)))
+				# print(error)
 		
 			Ypredtraining = self.model.evaluate(X)
 			Ypredvalidation = self.model.evaluate(X_v)
@@ -168,7 +168,7 @@ d = 1024*3 # numbers of pixels (RGB)
 # resolve = Resolve(K,d,lamda=0, n_epochs=40, n_batch=100, eta=.1)
 # resolve = Resolve(K,d,lamda=0, n_epochs=40, n_batch=100, eta=.001)
 # resolve = Resolve(K,d,lamda=.1, n_epochs=40, n_batch=100, eta=.001)
-resolve = Resolve(K,d,lamda=1, n_epochs=40, n_batch=100, eta=.001)
+resolve = Resolve(K,d,lamda=1, n_epochs=40, n_batch=10, eta=.001)
 
 
 
