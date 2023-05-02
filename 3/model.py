@@ -133,9 +133,8 @@ class Model:
 	
 	def backpropagate(self, X, Y, Hs, P):
 		self.etaCycle.next()
-		
 		grads = self.computeGradsAnalytical(X,Y,Hs,P)
 		for layer_id, layer in enumerate(self.layers):
-			layer["weight"] = -self.etaCycle.eta*grads[layer_id][0]
-			layer["bias"] = -self.etaCycle.eta*grads[layer_id][1]
+			layer["weight"] -= self.etaCycle.eta*grads[layer_id][0]
+			layer["bias"] -= self.etaCycle.eta*grads[layer_id][1]
 			
