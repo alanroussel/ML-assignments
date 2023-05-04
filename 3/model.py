@@ -1,6 +1,7 @@
 import numpy as np 
 from etaCycle import EtaCycle
 
+epslion = 1e-6
 def softmax(x):
 	""" Standard definition of the softmax function """
 	return np.exp(x) / np.sum(np.exp(x), axis=0)
@@ -29,22 +30,43 @@ class Model:
 		# if lr_cycle_magnitude of ns = 8, 1 cycle means 16 epochs so 2 cycle means 32 epochs
 		self.layers = []
 		for l in range(len(layers_sizes) - 1):
-			self.layers.append({ "weight":np.random.normal(0,1/np.sqrt(layers_sizes[l]), (layers_sizes[l+1], layers_sizes[l])), "bias": np.random.normal(0, 0, (layers_sizes[l+1], 1))})
+			self.layers.append(
+				{ 
+					"weight":np.random.normal(0,1/np.sqrt(layers_sizes[l]), (layers_sizes[l+1], layers_sizes[l])), 
+					"bias": np.random.normal(0, 0, (layers_sizes[l+1], 1)),
+					"scale":np.random.normal(0,1/np.sqrt(layers_sizes[l+1]), (layers_sizes[l+1],1)),
+					"shift":np.random.normal(0,1/np.sqrt(layers_sizes[l+1]), (layers_sizes[l+1],1))
+			})
+
+		self.layers[-1].pop("scale")
+		self.layers[-1].pop("shift")
 		self.weight_decay_parameter = weight_decay_parameter
 		self.etaCycle = EtaCycle(1e-5, 1e-1, ns)
 
 		print(f'model \n size of layers : {layers_sizes} \n weight decay parameter : {weight_decay_parameter} \n')
 	
-		
 	def evaluate(self, X):
 		X = X.T
-		Hs = []
+		metrics = [(0,0,X,0,0)]
 		for layer in self.layers[0:-1]:
-			X = ReLU(np.add(np.matmul(layer["weight"], X), layer["bias"])) 
-			Hs.append(X)
+			S = np.add(np.matmul(layer["weight"], X), layer["bias"])
+			
+			# compute and apply batch normalization
+			mean = np.average(S, 1)
+			var = np.var(S, 1)
+			Sc = np.divide(S-mean.reshape(mean.shape[0], 1), np.sqrt(var.reshape(var.shape[0], 1)) + epslion)
+			Sv = np.add(np.multiply(Sc, layer["scale"]), layer["shift"])
+
+			X = ReLU(Sv)
+
+			metrics.append((S, Sc, X, mean, var))
+
 		P = softmax(np.add(np.matmul(self.layers[-1]["weight"], X), self.layers[-1]["bias"]))
-		
-		return Hs, P
+
+		# metrics has to be unpack into separate lists
+
+		return metrics, P
+
 
 	def computeCost(self,Y,P,andAccuracy=True):
 		'''
@@ -104,37 +126,60 @@ class Model:
 
 		return [grad_W1, grad_b1]
 
-	def computeGradsAnalytical(self,X,Y,Hs,P):
-		grad_W1 = np.zeros(self.layers[0]["weight"].shape)
-		grad_b1 = np.zeros(self.layers[0]["bias"].shape)
-		grad_W2 = np.zeros(self.layers[1]["weight"].shape)
-		grad_b2 = np.zeros(self.layers[1]["bias"].shape)
+	def computeGradsAnalytical(self,X,Y,P, metrics):
 
-		grads = []
-		N = X.shape[0]
+		#unzip metrics
+		Ss, Scs, Xs, Ms, Vs = zip(*metrics)
+		
+		N = X.shape[0] #batch size
 		G = -(Y-P)
 		
-		for layer_id, layer in enumerate(reversed(self.layers)):
+		last_layer = self.layers[-1]
+		grad_weight = np.matmul(G,Xs[-1].T)/N + 2*self.weight_decay_parameter*last_layer["weight"]
+		grad_bias = np.average(G,1).reshape(last_layer["bias"].shape)
+		grads = [[grad_weight, grad_bias]] # to be appended later
+
+		G = np.matmul(last_layer["weight"].T, G)
+		G = np.multiply(G, np.where(Xs[-1]>0,1,0))
+		
+
+		for layer_id, layer in enumerate(reversed(self.layers[0:-1])):
 			if layer_id != len(self.layers)-1:
-				grad_weight = np.matmul(G,Hs[-1-layer_id].T)/N + 2*self.weight_decay_parameter*layer["weight"]
+				grad_scale = np.average(np.multiply(G, Scs[-1-layer_id]), 1).reshape(layer["scale"].shape)
+				grad_shift = np.average(G,1).reshape(layer["shift"].shape)
+
+				# Propagate the gradients through the scale and shift
+				G = np.multiply(G, layer["scale"])
+
+				# Propagate Gbatch through the batch normalization
+				gamma1 = np.power(Vs[-1-layer_id]+epslion, -0.5)
+				gamma2 = np.power(Vs[-1-layer_id]+epslion, -1.5)
+
+				G1 = np.multiply(G, gamma1.reshape(gamma1.shape[0],1))
+				G2 = np.multiply(G, gamma2.reshape(gamma2.shape[0],1))
+				D = np.subtract(Ss[-1-layer_id], Ms[-1-layer_id].reshape(Ms[-1-layer_id].shape[0], 1))
+
+				G = np.subtract(np.subtract(G1, np.average(G1,1).reshape(G1.shape[0],1)), np.multiply(D, np.multiply(G2,D))/N)
+
+				grad_weight = np.matmul(G, Xs[-1-layer_id-1].T) + 2*self.weight_decay_parameter*layer["weight"]
 				grad_bias = np.average(G,1).reshape(layer["bias"].shape)
 				G = np.matmul(layer["weight"].T, G)
-				G = np.multiply(G, np.where(Hs[-1-layer_id]>0,1,0))
-			else:
-				#computing gradients for the first layer
-				grad_weight = np.matmul(G,X)/N + 2*self.weight_decay_parameter*layer["weight"]
-				grad_bias = np.average(G,1).reshape(layer["bias"].shape)
-			grads.append([grad_weight, grad_bias])
+				G = np.multiply(G, np.where(Xs[-1-layer_id-1]>0,1,0))
+
+			grads.append([grad_weight, grad_bias, grad_scale, grad_shift])
 			
-
-
 		grads.reverse()
 		return grads
-	
-	def backpropagate(self, X, Y, Hs, P):
+
+
+	def backpropagate(self, X, Y, P, metrics):
+
 		self.etaCycle.next()
-		grads = self.computeGradsAnalytical(X,Y,Hs,P)
+		grads = self.computeGradsAnalytical(X,Y,P, metrics)
 		for layer_id, layer in enumerate(self.layers):
 			layer["weight"] -= self.etaCycle.eta*grads[layer_id][0]
 			layer["bias"] -= self.etaCycle.eta*grads[layer_id][1]
+			if(len(grads[layer_id])>2):
+				layer["scale"] -= self.etaCycle.eta*grads[layer_id][2]
+				layer["shift"] -= self.etaCycle.eta*grads[layer_id][3]
 			

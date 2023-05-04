@@ -85,9 +85,8 @@ class Optimizer:
 				X_batch = X[batch_id_start:batch_id_end, :]
 				Y_batch = Y[:, batch_id_start:batch_id_end]
 
-				Hs, Y_pred = self.model.evaluate(X_batch)
-
-				self.model.backpropagate(X_batch, Y_batch,Hs, Y_pred)
+				metrics, Y_pred = self.model.evaluate(X_batch)
+				self.model.backpropagate(X_batch, Y_batch,Y_pred, metrics)
 
 			# at each epoch
 			if(not (mode=="tuning")):
