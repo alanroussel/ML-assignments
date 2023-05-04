@@ -59,11 +59,11 @@ class Optimizer:
 				X_batch = X[batch_id_start:batch_id_end, :]
 				Y_batch = Y[:, batch_id_start:batch_id_end]
 
-				H, Y_pred = self.model.evaluate(X_batch)
+				metrics, Y_pred = self.model.evaluate(X_batch, step="training_time")
 
 				print(f'computing error for a batch ... ')
-				analytical  = self.model.computeGradsAnalytical(X_batch, Y_batch,H, Y_pred)
-				numeric = self.model.computeGradsNum(X_batch, Y_batch,Y_pred, h=1e-5)
+				analytical  = self.model.computeGradsAnalytical(X_batch, Y_batch,Y_pred, metrics)
+				numeric = self.model.computeGradsNum(X_batch, Y_batch,Y_pred, 1e-6, analytical)
 				layers_name_to_print = ["W1", "b1"]
 				for i, name in enumerate(layers_name_to_print):
 					error = np.max(np.abs(analytical[0][i]-numeric[i])) / np.maximum(1e-6,np.abs(np.max(analytical[0][i])) + np.abs(np.max(numeric[i])))
@@ -85,14 +85,14 @@ class Optimizer:
 				X_batch = X[batch_id_start:batch_id_end, :]
 				Y_batch = Y[:, batch_id_start:batch_id_end]
 
-				metrics, Y_pred = self.model.evaluate(X_batch)
+				metrics, Y_pred = self.model.evaluate(X_batch, step="training_time")
 				self.model.backpropagate(X_batch, Y_batch,Y_pred, metrics)
 
 			# at each epoch
 			if(not (mode=="tuning")):
 				# if mode is training or debugging, we want to see the evolution of train and validation cost etc
-				_, Ptraining = self.model.evaluate(X)
-				_, Pvalidation = self.model.evaluate(X_v)
+				_, Ptraining = self.model.evaluate(X, step="testing_time")
+				_, Pvalidation = self.model.evaluate(X_v, step="testing_time")
 				
 				t_loss, t_cost, t_accuracy= self.model.computeCost(Y, Ptraining)
 				v_loss, v_cost, v_accuracy= self.model.computeCost(Y_v, Pvalidation)
@@ -103,7 +103,7 @@ class Optimizer:
 					print(f'\t valid loss/cost/accuracy = {v_loss:.5g} / {v_cost:.5g} / {v_accuracy:.3g}')
 			
 		if(mode=="training" or mode=="debug"):
-			_, Ptest = self.model.evaluate(self.dataset.test[0])
+			_, Ptest = self.model.evaluate(self.dataset.test[0],step="testing_time")
 			t_loss,t_cost, t_accuracy = self.model.computeCost(self.dataset.test[1], Ptest)
 			print(f'\n\t test loss/cost/accuracy = {t_loss:.5g} / {t_cost:.5g} / {t_accuracy:.3g}')
 			if(plot):
@@ -111,7 +111,7 @@ class Optimizer:
 			return t_loss,t_cost, t_accuracy
 		
 		elif(mode=="tuning"):
-			_, Pvalidation = self.model.evaluate(X_v)
+			_, Pvalidation = self.model.evaluate(X_v, step="testing_time")
 			v_loss, v_cost, v_accuracy= self.model.computeCost(Y_v, Pvalidation)
 			print(f'\n\t validation loss/cost/accuracy = {v_loss:.5g} / {v_cost:.5g} / {v_accuracy:.3g}')
 			return v_loss, v_cost, v_accuracy

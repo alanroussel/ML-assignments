@@ -5,7 +5,7 @@ from datasetLoader import DatasetLoader
 from optimizer import Optimizer
 
 # MODE CONFIG - debug, training, or tuning ? 
-mode = "debug"
+mode = "training"
 dataset = DatasetLoader(mode) 
 
 if mode=="debug":
@@ -14,17 +14,17 @@ if mode=="debug":
 	# optimizer = Optimizer(weight_decay_parameter=0, lr_cycle_magnitude=5, n_epochs=20, batch_size=10, dataset=dataset, hidden_layers_structure=[10])
 	# optimizer.compare_two_gradients_methods()
 	
-	# print("\n --- \n")
-	# optimizer = Optimizer(weight_decay_parameter=0, lr_cycle_magnitude=5, n_epochs=20, batch_size=10, dataset=dataset, hidden_layers_structure=[10,12])
-	# optimizer.compare_two_gradients_methods()
+	print("\n --- \n")
+	optimizer = Optimizer(weight_decay_parameter=0, lr_cycle_magnitude=5, n_epochs=20, batch_size=10, dataset=dataset, hidden_layers_structure=[11,12])
+	optimizer.compare_two_gradients_methods()
 
 	# print("\n --- \n")
 	# optimizer = Optimizer(weight_decay_parameter=0, lr_cycle_magnitude=5, n_epochs=20, batch_size=10, dataset=dataset, hidden_layers_structure=[10,12,15])
 	# optimizer.compare_two_gradients_methods()
 	
 	# simple training
-	optimizer = Optimizer(weight_decay_parameter=0, lr_cycle_magnitude=5, n_epochs=20, batch_size=50, dataset=dataset, hidden_layers_structure=[50,50])
-	optimizer.resolve_with_SDG(plot=True, verbose=True, mode=mode)
+	# optimizer = Optimizer(weight_decay_parameter=0, lr_cycle_magnitude=5, n_epochs=20, batch_size=50, dataset=dataset, hidden_layers_structure=[50,50])
+	# optimizer.resolve_with_SDG(plot=True, verbose=True, mode=mode)
 
 	#debug cyclical learning rate 
 	# optimizer = Optimizer(weight_decay_parameter = 1e-2, lr_cycle_magnitude=5, n_epochs = 10, batch_size=100, dataset=dataset)
@@ -72,7 +72,7 @@ if mode == "tuning":
 if mode == "training":
 	# best parameters are lambda = e-3
 	# optimizer = Optimizer(weight_decay_parameter=5e-3, lr_cycle_magnitude=5, n_epochs=20, batch_size=100, dataset=dataset,hidden_layers_structure=[50,50])
-	optimizer = Optimizer(weight_decay_parameter=5e-3, lr_cycle_magnitude=5, n_epochs=20, batch_size=100, dataset=dataset,hidden_layers_structure=[50, 30, 20, 20, 10, 10, 10, 10])
+	optimizer = Optimizer(weight_decay_parameter=5e-3, lr_cycle_magnitude=5, n_epochs=20, batch_size=100, dataset=dataset,hidden_layers_structure=[50, 50])
 	loss, c, a = optimizer.resolve_with_SDG(plot=True, verbose=True, mode=mode)
 	#overfiiting parameters : 0:100 of training
 
