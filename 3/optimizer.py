@@ -2,8 +2,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 from model import Model
 class Optimizer:
-	def __init__(self,weight_decay_parameter, lr_cycle_magnitude, n_epochs, batch_size, dataset, hidden_layers_structure):
-		self.model = Model(hidden_layers_structure, weight_decay_parameter, batch_size, lr_cycle_magnitude, dataset.training[0].shape[0])
+	def __init__(self,weight_decay_parameter, lr_cycle_magnitude, n_epochs, batch_size, dataset, hidden_layers_structure, batch_normalization):
+		self.model = Model(hidden_layers_structure, weight_decay_parameter, batch_size, lr_cycle_magnitude, dataset.training[0].shape[0], batch_normalization)
 		self.n_epochs = n_epochs
 		self.batch_size = batch_size
 		self.dataset = dataset
@@ -31,7 +31,7 @@ class Optimizer:
 		plt.legend()
 
 
-		plt.suptitle('suptitle to write')
+		plt.suptitle(self.model.plot_title)
 		plt.show()
 		
 		# fig, ax = plt.subplots(1,10, figsize=(16, 8))
@@ -62,8 +62,8 @@ class Optimizer:
 				metrics, Y_pred = self.model.evaluate(X_batch, step="training_time")
 
 				print(f'computing error for a batch ... ')
-				analytical  = self.model.computeGradsAnalytical(X_batch, Y_batch,Y_pred, metrics)
-				numeric = self.model.computeGradsNum(X_batch, Y_batch,Y_pred, 1e-6, analytical)
+				analytical = self.model.computeGradsAnalytical(X_batch, Y_batch,Y_pred, metrics)
+				numeric = self.model.computeGradsNum(X_batch, Y_batch,Y_pred, 1e-6)
 				layers_name_to_print = ["W1", "b1"]
 				for i, name in enumerate(layers_name_to_print):
 					error = np.max(np.abs(analytical[0][i]-numeric[i])) / np.maximum(1e-6,np.abs(np.max(analytical[0][i])) + np.abs(np.max(numeric[i])))
