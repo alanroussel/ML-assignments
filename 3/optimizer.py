@@ -2,12 +2,14 @@ import numpy as np
 import matplotlib.pyplot as plt
 from model import Model
 class Optimizer:
-	def __init__(self,weight_decay_parameter, lr_cycle_magnitude, n_epochs, batch_size, dataset, hidden_layers_structure, batch_normalization):
-		self.model = Model(hidden_layers_structure, weight_decay_parameter, batch_size, lr_cycle_magnitude, dataset.training[0].shape[0], batch_normalization)
+	def __init__(self,weight_decay_parameter, lr_cycle_magnitude, n_epochs, batch_size, dataset, hidden_layers_structure, batch_normalization, verbose):
+		self.model = Model(hidden_layers_structure, weight_decay_parameter, batch_size, lr_cycle_magnitude, dataset.training[0].shape[0], batch_normalization, verbose)
 		self.n_epochs = n_epochs
 		self.batch_size = batch_size
 		self.dataset = dataset
-		print(f'optimizer \n n_epochs : {n_epochs} \n batch_size : {batch_size} \n')
+		self.verbose = verbose
+		if(verbose):
+			print(f'optimizer \n n_epochs : {n_epochs} \n batch_size : {batch_size} \n')
 	
 	def plot(self, plot_metrics, n_epochs):
 		plt.subplot(133)
@@ -69,7 +71,7 @@ class Optimizer:
 					error = np.max(np.abs(analytical[0][i]-numeric[i])) / np.maximum(1e-6,np.abs(np.max(analytical[0][i])) + np.abs(np.max(numeric[i])))
 					print(f'\terror is {error} for {name}')
 
-	def resolve_with_SDG(self, verbose=True, plot=True, mode="training"):
+	def resolve_with_SDG(self, plot=True, mode="training"):
 		X, Y = np.copy(self.dataset.training[0]), np.copy(self.dataset.training[1])
 		n_of_data = X.shape[0]
 		X_v, Y_v = self.dataset.validation[0], self.dataset.validation[1]
@@ -97,7 +99,7 @@ class Optimizer:
 				t_loss, t_cost, t_accuracy= self.model.computeCost(Y, Ptraining)
 				v_loss, v_cost, v_accuracy= self.model.computeCost(Y_v, Pvalidation)
 				plot_metrics[epoch] = np.array([t_loss, t_cost, t_accuracy, v_loss, v_cost, v_accuracy, self.model.etaCycle.eta])
-				if(verbose):
+				if(self.verbose):
 					print('-- at end of epoch #{} --'.format(epoch))
 					print(f'\t train loss/cost/accuracy = {t_loss:.5g} / {t_cost:.5g} / {t_accuracy:.3g}')
 					print(f'\t valid loss/cost/accuracy = {v_loss:.5g} / {v_cost:.5g} / {v_accuracy:.3g}')

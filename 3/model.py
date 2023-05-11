@@ -13,7 +13,7 @@ def ReLU(x):
 	return np.maximum(x, 0) #to be checked
 
 class Model:
-	def __init__(self,hidden_layers_structure, weight_decay_parameter, batch_size, lr_cycle_magnitude, size_of_dataset, batch_normalization):
+	def __init__(self,hidden_layers_structure, weight_decay_parameter, batch_size, lr_cycle_magnitude, size_of_dataset, batch_normalization, verbose):
 		"""
 		hidden_layers_structure : array containing size of each hidden layer. ex [50] or [15,15]
 		lambda : weight decay parameter
@@ -40,9 +40,9 @@ class Model:
 			self.layers.append(
 				{ 
 					"weight":np.random.normal(0,1/np.sqrt(layers_sizes[l]),shape_weight), 
-					"bias": np.zeros(shape_activation),
-					"scale":np.zeros(shape_activation),
-					"shift":np.zeros(shape_activation),
+					"bias": np.random.normal(0,1/np.sqrt(layers_sizes[l]),shape_activation),
+					"scale":np.ones(shape_activation),
+					"shift":np.ones(shape_activation),
 					"batch_normalization":BatchNormalization(shape_activation)
 			})
 
@@ -53,8 +53,8 @@ class Model:
 
 		self.weight_decay_parameter = weight_decay_parameter
 		self.etaCycle = EtaCycle(1e-5, 1e-1, ns)
-
-		print(f'model \n size of layers : {layers_sizes} \n weight decay parameter : {weight_decay_parameter} \n batch normalization : {batch_normalization} \n')
+		if(verbose):
+			print(f'model \n size of layers : {layers_sizes} \n weight decay parameter : {weight_decay_parameter} \n batch normalization : {batch_normalization} \n')
 		self.plot_title = f'layers : {layers_sizes}, weight decay parameter : {weight_decay_parameter} batch normalization : {batch_normalization}'
 	
 	def evaluate(self, X, step):
@@ -193,7 +193,6 @@ class Model:
 		N = X.shape[0] #batch size
 		#unzip metrics
 		Ss, S_hats, Xs = zip(*metrics)
-		
 		if(self.batch_normalization):
 			G = -(Y-P)
 			last_layer = self.layers[-1]
