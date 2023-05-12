@@ -12,28 +12,21 @@ class Optimizer:
 			print(f'optimizer \n n_epochs : {n_epochs} \n batch_size : {batch_size} \n')
 	
 	def plot(self, plot_metrics, n_epochs):
-		plt.subplot(133)
+		plt.subplot(122)
 		plt.title('accuracy')
 		plt.plot(range(1,n_epochs+1), plot_metrics[:,2], label="training")
 		plt.plot(range(1,n_epochs+1), plot_metrics[:,5], label="validation")
 		plt.legend()
 	
-		plt.subplot(131)
-		plt.title('cost')
-		plt.plot(range(1,n_epochs+1), plot_metrics[:,1], label="training")
-		plt.plot(range(1,n_epochs+1), plot_metrics[:,4], label="validation")
-		plt.plot(range(1,n_epochs+1), plot_metrics[:,6], ".", alpha=0.2) 
-		plt.legend()
 		
-		plt.subplot(132)
+		plt.subplot(121)
 		plt.title('loss')
 		plt.plot(range(1,n_epochs+1), plot_metrics[:,0], label="training")
 		plt.plot(range(1,n_epochs+1), plot_metrics[:,3], label="validation")
-		plt.plot(range(1,n_epochs+1), plot_metrics[:,6], ".", alpha=0.2) 
 		plt.legend()
 
 
-		plt.suptitle(self.model.plot_title)
+		# plt.suptitle(self.model.plot_title)
 		plt.show()
 		
 		# fig, ax = plt.subplots(1,10, figsize=(16, 8))
