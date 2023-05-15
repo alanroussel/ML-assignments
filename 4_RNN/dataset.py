@@ -2,7 +2,7 @@ import numpy as np
 
 class Data:
 	def __init__(self):
-		with open('4_RNN/goblet_book.txt', 'r') as file:
+		with open('goblet_book.txt', 'r') as file:
 			content = file.read()
 			self.book_data = np.array(list(content))
 			self.book_chars = np.unique(self.book_data)

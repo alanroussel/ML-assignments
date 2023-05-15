@@ -1,9 +1,6 @@
 import numpy as np 
 from dataset import Data
-from tqdm import tqdm
-
 epslion = 1e-15
-
 
 def softmax(x):
 	""" Standard definition of the softmax function """
@@ -11,15 +8,14 @@ def softmax(x):
 
 
 class Model:
-	def __init__(self, data, eta, m=100):
+	def __init__(self, dataK,m=100):
 		'''
 		data: dataloader
 		m: dimensionality of hidden layers
 		'''
-		self.data = data
-		self.K = data.K
+		self.K = dataK
 		self.m = m
-		self.eta = eta
+		self.eta = 0.1
 		self.seq_length = 25
 		# inhererent parameters known from the dataset
 		sig = 0.01
@@ -38,8 +34,19 @@ class Model:
 					"c":np.zeros((self.K,1))}
 		
 		print(f'init model w m = {m}')
-		
+	
+	def save(self, n_epochs):
+		folder_path = f'./model_weights/nepochs{n_epochs}'
+		for layer_id, layer_name in enumerate(self.RNN):
+			file_path = folder_path + layer_name
+			np.save(file_path, self.RNN[layer_name])
 
+	def load(self, n_epochs):
+		print(f'loaded model from n_epochs = {n_epochs}')
+		folder_path = f'./model_weights/nepochs{n_epochs}'
+		for layer_id, layer_name in enumerate(self.RNN):
+			file_path = folder_path + layer_name + '.npy'
+			self.RNN[layer_name] = np.load(file_path)
 	def synthesize(self,x0,h,n):
 		res = np.zeros((x0.shape[0],n))
 		res[:,0] = x0.T
@@ -82,9 +89,9 @@ class Model:
 		pred = np.zeros(input.shape)
 
 		if weigth_to_consider:
-			U,W,V,b,c = weigth_to_consider.values()
+			U,W,V,b,c = weigth_to_consider.values() # used when checking the gradients
 		else:
-			U,W,V,b,c = self.RNN.values()
+			U,W,V,b,c = self.RNN.values() #otherwise, we use the one stored in the self object.
 
 
 		a_s = np.zeros((self.m, n))
@@ -122,7 +129,7 @@ class Model:
 		grad_c = grad_ot
 
 		grad_ht = np.matmul(grad_ot.T,self.RNN["V"])
-		grad_at = np.matmul(grad_ht, np.diag(1-np.power(a_s[:,-1], 2))) 
+		grad_at = np.matmul(grad_ht, np.diag(1-np.square(np.tanh(a_s[:,-1]))))
 		
 		grad_W = np.matmul(grad_at.T, np.expand_dims(h_s[:,-2],1).T)
 		grad_U = np.matmul(grad_at.T, np.expand_dims(input[:,-1],1).T)
@@ -133,7 +140,7 @@ class Model:
 			grad_c += grad_ot
 
 			grad_ht = np.matmul(grad_ot.T,self.RNN["V"]) + np.matmul(grad_at, self.RNN["W"])
-			grad_at = np.matmul(grad_ht, np.diag(1-np.power(a_s[:,t], 2)))
+			grad_at = np.matmul(grad_ht, np.diag(1-np.square(np.tanh(a_s[:,t]))))
 
 			grad_W += np.matmul(grad_at.T, np.expand_dims(h_s[:,t],1).T)
 			grad_U += np.matmul(grad_at.T, np.expand_dims(input[:,t],1).T)
